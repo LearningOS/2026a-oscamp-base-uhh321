@@ -2,8 +2,8 @@
   "schema": 1,
   "courseId": 2074,
   "repository": "LearningOS/2026a-oscamp-base-uhh321",
-  "commit": "f96dc7ad3bdaad26754a77092ae875c3a8e86207",
-  "score": 3,
+  "commit": "aba10763242d9fd9a2b845ef8be2cccd1b1aa154",
+  "score": 11,
   "totalScore": 100,
   "exercises": [
     {
@@ -16,16 +16,16 @@
     {
       "name": "mutex_counter",
       "max": 4,
-      "score": 0,
-      "status": "fail",
-      "exitCode": 101
+      "score": 4,
+      "status": "pass",
+      "exitCode": 0
     },
     {
       "name": "channel",
       "max": 4,
-      "score": 0,
-      "status": "fail",
-      "exitCode": 101
+      "score": 4,
+      "status": "pass",
+      "exitCode": 0
     },
     {
       "name": "process_pipe",
@@ -176,9 +176,9 @@
     }
   ],
   "student": "uhh321",
-  "runId": "36668657761",
+  "runId": "36691250210",
   "runAttempt": "1",
   "upload": {
-    "status": "accepted"
+    "status": "pending"
   }
 }
