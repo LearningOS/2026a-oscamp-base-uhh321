@@ -2,8 +2,8 @@
   "schema": 1,
   "courseId": 2074,
   "repository": "LearningOS/2026a-oscamp-base-uhh321",
-  "commit": "0282ee3c3010071abcbbbb6c6aabe6a09f19b8f0",
-  "score": 39,
+  "commit": "c6524cbebf596d65698c2c38ab9fefac64bc813f",
+  "score": 47,
   "totalScore": 100,
   "exercises": [
     {
@@ -72,16 +72,16 @@
     {
       "name": "atomic_counter",
       "max": 4,
-      "score": 0,
-      "status": "fail",
-      "exitCode": 101
+      "score": 4,
+      "status": "pass",
+      "exitCode": 0
     },
     {
       "name": "atomic_ordering",
       "max": 4,
-      "score": 0,
-      "status": "fail",
-      "exitCode": 101
+      "score": 4,
+      "status": "pass",
+      "exitCode": 0
     },
     {
       "name": "spinlock",
@@ -176,9 +176,9 @@
     }
   ],
   "student": "uhh321",
-  "runId": "38137282960",
+  "runId": "38254140912",
   "runAttempt": "1",
   "upload": {
-    "status": "accepted"
+    "status": "pending"
   }
 }
