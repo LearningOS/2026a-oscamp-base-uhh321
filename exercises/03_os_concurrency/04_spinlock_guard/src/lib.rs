@@ -11,6 +11,7 @@
 
 use std::cell::UnsafeCell;
 use std::ops::{Deref, DerefMut};
+use std::sync::atomic::Ordering::Release;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 pub struct SpinLock<T> {
@@ -41,8 +42,22 @@ impl<T> SpinLock<T> {
     pub fn lock(&self) -> SpinGuard<'_, T> {
         // TODO: Spin-wait to acquire lock
         // TODO: Return SpinGuard { lock: self }
-        todo!()
-    }
+       loop{
+        match self.locked.compare_exchange(
+            false,
+            true,
+            Ordering::Acquire,
+            Ordering::Relaxed
+        ){
+            Ok(_)=>{
+                return SpinGuard { lock: self };
+            }
+            Err(_)=>{
+                core::hint::spin_loop()
+            }
+        }
+       }
+}
 }
 
 // TODO: Implement Deref trait for SpinGuard
@@ -51,7 +66,8 @@ impl<T> Deref for SpinGuard<'_, T> {
     type Target = T;
 
     fn deref(&self) -> &T {
-        todo!()
+        let r: &T = unsafe{ &*(self.lock.data.get())};
+        r
     }
 }
 
@@ -59,7 +75,8 @@ impl<T> Deref for SpinGuard<'_, T> {
 // Return &mut T
 impl<T> DerefMut for SpinGuard<'_, T> {
     fn deref_mut(&mut self) -> &mut T {
-        todo!()
+        let r: &mut T = unsafe{ &mut *(self.lock.data.get()) };
+        r
     }
 }
 
@@ -67,7 +84,7 @@ impl<T> DerefMut for SpinGuard<'_, T> {
 // Set lock.locked to false (Release ordering)
 impl<T> Drop for SpinGuard<'_, T> {
     fn drop(&mut self) {
-        todo!()
+        self.lock.locked.store(false,Ordering::Release);
     }
 }
 
