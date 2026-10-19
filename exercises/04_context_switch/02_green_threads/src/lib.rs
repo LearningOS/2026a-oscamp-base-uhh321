@@ -137,22 +137,84 @@ impl Scheduler {
     ///    `sp` must be 16-byte aligned (e.g. `(stack_top - 16) & !15` to leave headroom).
     /// 3. Push a `GreenThread` with this context, state `Ready`, and `entry` stored for the wrapper to call.
     pub fn spawn(&mut self, entry: extern "C" fn()) {
-        todo!("alloc stack, init ctx with ra=thread_wrapper and aligned sp, push GreenThread(Ready, entry)")
+        let stack = vec![0u8;STACK_SIZE];
+
+        let stack_top =stack.as_ptr() as usize + STACK_SIZE;
+        let stack_top=(stack_top-16) & !15;
+         // 3. 初始化线程上下文
+    let mut ctx = TaskContext::default();
+    ctx.sp = stack_top as u64;
+    ctx.ra = thread_wrapper as *const () as usize as u64;
+
+    // 4. 创建线程并加入调度器
+    let thread = GreenThread {
+        ctx,
+        state: ThreadState::Ready,
+        _stack: Some(stack),
+        entry: Some(entry),
+    };
+
+    self.threads.push(thread);
+}
+
+pub fn run(&mut self) {
+    // 注册当前调度器
+    unsafe {
+        SCHEDULER = self as *mut Scheduler;
     }
 
-    /// Run the scheduler until all threads (except the main one) are `Finished`.
-    ///
-    /// 1. Set the global `SCHEDULER` pointer to `self` so that `yield_now` and `thread_finished` can call back.
-    /// 2. Loop: if all threads in `threads[1..]` are `Finished`, break; otherwise call `schedule_next()` (which may switch away and later return).
-    /// 3. Clear `SCHEDULER` when done.
-    pub fn run(&mut self) {
-        todo!("set SCHEDULER to self, loop until threads[1..] all Finished, call schedule_next, then clear SCHEDULER")
+    // 只要还有未完成的用户线程，就继续调度
+    while self.threads[1..]
+        .iter()
+        .any(|thread| thread.state != ThreadState::Finished)
+    {
+        self.schedule_next();
     }
 
-    /// Find the next ready thread (starting from `current + 1` round-robin), mark current as `Ready` (if not `Finished`), mark next as `Running`, set `CURRENT_THREAD_ENTRY` if the next thread has an entry, then switch to it.
-    fn schedule_next(&mut self) {
-        todo!("round-robin find next Ready, set current Ready (if not Finished), next Running, CURRENT_THREAD_ENTRY, then switch_context")
+    // 所有用户线程结束，清除调度器指针
+    unsafe {
+        SCHEDULER = core::ptr::null_mut();
     }
+}
+
+fn schedule_next(&mut self) {
+    let current = self.current;
+
+    // 当前线程如果还在运行，切换后将变为 Ready
+    if self.threads[current].state == ThreadState::Running {
+        self.threads[current].state = ThreadState::Ready;
+    }
+
+    // 从当前线程之后开始，循环查找下一个 Ready 线程
+    let total = self.threads.len();
+    let mut next = (current + 1) % total;
+
+    while self.threads[next].state != ThreadState::Ready {
+        next = (next + 1) % total;
+    }
+
+    // 将下一个线程设为 Running
+    self.threads[next].state = ThreadState::Running;
+
+    // 如果是第一次运行该线程，取出它的入口函数
+    unsafe {
+        CURRENT_THREAD_ENTRY = self.threads[next].entry.take();
+    }
+
+    // 更新当前线程索引
+    self.current = next;
+
+    // 保存当前线程上下文，恢复下一个线程上下文
+    unsafe {
+        let old_ctx = self.threads[current].ctx.as_mut_ptr();
+        let new_ctx = self.threads[next].ctx.as_ptr();
+
+        switch_context(
+            &mut *old_ctx,
+            &*new_ctx,
+        );
+    }
+}
 }
 
 impl TaskContext {
